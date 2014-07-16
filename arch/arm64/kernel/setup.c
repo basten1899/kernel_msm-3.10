@@ -43,6 +43,7 @@
 #include <linux/of_platform.h>
 #include <linux/personality.h>
 
+#include <asm/cpu.h>
 #include <asm/cputype.h>
 #include <asm/elf.h>
 #include <asm/cputable.h>
@@ -193,19 +194,6 @@ static void __init smp_build_mpidr_hash(void)
 }
 #endif
 
-struct cpuinfo_arm64 {
-	struct cpu	cpu;
-	u32		reg_midr;
-};
-
-static DEFINE_PER_CPU(struct cpuinfo_arm64, cpu_data);
-
-void cpuinfo_store_cpu(void)
-{
-	struct cpuinfo_arm64 *info = this_cpu_ptr(&cpu_data);
-	info->reg_midr = read_cpuid_id();
-}
-
 static void __init setup_processor(void)
 {
 	struct cpu_info *cpu_info;
@@ -226,7 +214,7 @@ static void __init setup_processor(void)
 	sprintf(init_utsname()->machine, ELF_PLATFORM);
 	elf_hwcap = 0;
 
-	cpuinfo_store_cpu();
+	cpuinfo_store_boot_cpu();
 
 	/*
 	 * ID_AA64ISAR0_EL1 contains 4-bit wide signed feature blocks.
