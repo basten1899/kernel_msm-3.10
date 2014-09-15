@@ -87,6 +87,7 @@ static struct msm_gpiomux_config hap_lvl_shft_config[] __initdata = {
 	},
 };
 
+
 static struct msm_gpiomux_config mdm_configs[] __initdata = {
 	/* AP2MDM_STATUS */
 	{
@@ -1204,6 +1205,41 @@ static struct msm_gpiomux_config msm_pcie_configs[] __initdata = {
 	},
 };
 
+/*
+*GPIOs 75 and 95 are used as Headset and Mic detection pins
+*initial pull configuration is PD. Changing to PU.
+*/
+static struct gpiomux_setting hs_det = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_UP,
+	.dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting mic_det = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_UP,
+	.dir = GPIOMUX_IN,
+};
+
+static struct msm_gpiomux_config msm_hs_configs[] __initdata = {
+	/* GPIO75 - HS Det*/
+	{
+		.gpio = 75,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &hs_det,
+		}
+	},
+	/* GPIO75 - MIC Det*/
+	{
+		.gpio = 95,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &mic_det,
+		}
+	},
+};
+
 static struct msm_gpiomux_config msm_qca1530_cdp_configs[] __initdata = {
 	{
 		.gpio = 133,    /* qca1530 reset */
@@ -1305,6 +1341,8 @@ void __init apq8084_init_gpiomux(void)
 				ARRAY_SIZE(msm_sensor_configs));
 	msm_gpiomux_install(msm_pcie_configs, ARRAY_SIZE(msm_pcie_configs));
 	msm_gpiomux_install(msm_epm_configs, ARRAY_SIZE(msm_epm_configs));
+
+	msm_gpiomux_install(msm_hs_configs, ARRAY_SIZE(msm_hs_configs));
 
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 	if (of_board_is_cdp())

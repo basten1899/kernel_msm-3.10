@@ -2779,7 +2779,14 @@ static irqreturn_t wcd9xxx_hs_insert_irq(int irq, void *data)
 
 	is_mb_trigger = !!(snd_soc_read(codec, mbhc->mbhc_bias_regs.mbhc_reg) &
 			   0x10);
-	is_removal = !!(snd_soc_read(codec, WCD9XXX_A_CDC_MBHC_INT_CTL) & 0x02);
+
+	if (mbhc->mbhc_cfg->gpio)
+		is_removal = (gpio_get_value_cansleep(mbhc->mbhc_cfg->gpio) !=
+			mbhc->mbhc_cfg->gpio_level_insert);
+	else
+		is_removal =
+		!!(snd_soc_read(codec, WCD9XXX_A_CDC_MBHC_INT_CTL) & 0x02);
+
 	snd_soc_update_bits(codec, WCD9XXX_A_CDC_MBHC_INT_CTL, 0x03, 0x00);
 
 	/* Turn off both HPH and MIC line schmitt triggers */
@@ -3220,8 +3227,10 @@ static void wcd9xxx_swch_irq_handler(struct wcd9xxx_mbhc *mbhc)
 		pr_debug("%s: button press is canceled\n", __func__);
 
 	insert = !wcd9xxx_swch_level_remove(mbhc);
+
 	pr_debug("%s: Current plug type %d, insert %d\n", __func__,
 		 mbhc->current_plug, insert);
+
 	if ((mbhc->current_plug == PLUG_TYPE_NONE) && insert) {
 		mbhc->lpi_enabled = false;
 		wmb();
@@ -4128,11 +4137,23 @@ static int wcd9xxx_setup_jack_detect_irq(struct wcd9xxx_mbhc *mbhc)
 	void *core_res = mbhc->resmgr->core_res;
 
 	if (mbhc->mbhc_cfg->gpio) {
+
+		ret = gpio_request(mbhc->mbhc_cfg->gpio, "headset detect");
+		if (ret) {
+			pr_err("%s:failed to request jack det goio %d\n",
+				__func__, mbhc->mbhc_cfg->gpio_irq);
+				ret = -EINVAL;
+		}
+
+		mbhc->mbhc_cfg->gpio_irq = gpio_to_irq(mbhc->mbhc_cfg->gpio);
+		pr_debug("%s: Jack detect gpio_irq %d\n",
+			__func__, mbhc->mbhc_cfg->gpio_irq);
+
 		ret = request_threaded_irq(mbhc->mbhc_cfg->gpio_irq, NULL,
 					   wcd9xxx_mech_plug_detect_irq,
-					   (IRQF_TRIGGER_RISING |
+					   (IRQF_TRIGGER_RISING  |
 					    IRQF_TRIGGER_FALLING |
-					    IRQF_DISABLED),
+					    IRQF_ONESHOT),
 					   "headset detect", mbhc);
 		if (ret) {
 			pr_err("%s: Failed to request gpio irq %d\n", __func__,
@@ -4141,8 +4162,9 @@ static int wcd9xxx_setup_jack_detect_irq(struct wcd9xxx_mbhc *mbhc)
 			ret = enable_irq_wake(mbhc->mbhc_cfg->gpio_irq);
 			if (ret)
 				pr_err("%s: Failed to enable wake up irq %d\n",
-				       __func__, mbhc->mbhc_cfg->gpio_irq);
+					__func__, mbhc->mbhc_cfg->gpio_irq);
 		}
+
 	} else if (mbhc->mbhc_cfg->insert_detect) {
 		/* Enable HPHL_10K_SW */
 		snd_soc_update_bits(mbhc->codec, WCD9XXX_A_RX_HPH_OCP_CTL,
@@ -4189,13 +4211,11 @@ static int wcd9xxx_init_and_calibrate(struct wcd9xxx_mbhc *mbhc)
 		wcd9xxx_enable_irq(mbhc->resmgr->core_res,
 				   mbhc->intr_ids->hph_right_ocp);
 
+
 		/* Initialize mechanical mbhc */
 		ret = wcd9xxx_setup_jack_detect_irq(mbhc);
 
 		if (!ret && mbhc->mbhc_cfg->gpio) {
-			/* Requested with IRQF_DISABLED */
-			enable_irq(mbhc->mbhc_cfg->gpio_irq);
-
 			/* Bootup time detection */
 			wcd9xxx_swch_irq_handler(mbhc);
 		} else if (!ret && mbhc->mbhc_cfg->insert_detect) {
