@@ -562,3 +562,7 @@
 		};
 	};
 };
+
+&pma8084_l22 {
+	regulator-always-on;
+};
