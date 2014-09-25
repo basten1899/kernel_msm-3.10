@@ -3330,6 +3330,44 @@ static irqreturn_t wcd9xxx_mech_plug_detect_irq(int irq, void *data)
 	return r;
 }
 
+static void wcd9xxx_mic_irq_handler(struct wcd9xxx_mbhc *mbhc)
+{
+	int insert = 0;
+
+	pr_debug("%s: enter\n", __func__);
+	if (mbhc->mbhc_cfg->gpio_mic)
+		insert = !(gpio_get_value_cansleep(mbhc->mbhc_cfg->gpio_mic) !=
+			mbhc->mbhc_cfg->gpio_level_insert);
+
+	pr_debug("%s: mic insert %d\n", __func__, insert);
+
+	if (insert)
+		wcd9xxx_onoff_ext_mclk(mbhc, true);
+	else
+		wcd9xxx_onoff_ext_mclk(mbhc, false);
+
+	pr_debug("%s: leave\n", __func__);
+}
+static irqreturn_t wcd9xxx_mech_mic_detect_irq(int irq, void *data)
+{
+	int r = IRQ_HANDLED;
+	struct wcd9xxx_mbhc *mbhc = data;
+
+	pr_debug("%s: enter\n", __func__);
+
+	if (unlikely(wcd9xxx_lock_sleep(mbhc->resmgr->core_res) == false)) {
+		pr_warn("%s: failed to hold suspend\n", __func__);
+		r = IRQ_NONE;
+	} else {
+		/* Call handler */
+		wcd9xxx_mic_irq_handler(mbhc);
+		wcd9xxx_unlock_sleep(mbhc->resmgr->core_res);
+	}
+
+	pr_debug("%s: leave %d\n", __func__, r);
+	return r;
+}
+
 static int wcd9xxx_is_false_press(struct wcd9xxx_mbhc *mbhc)
 {
 	s16 mb_v;
@@ -4137,11 +4175,10 @@ static int wcd9xxx_setup_jack_detect_irq(struct wcd9xxx_mbhc *mbhc)
 	void *core_res = mbhc->resmgr->core_res;
 
 	if (mbhc->mbhc_cfg->gpio) {
-
 		ret = gpio_request(mbhc->mbhc_cfg->gpio, "headset detect");
 		if (ret) {
 			pr_err("%s:failed to request jack det goio %d\n",
-				__func__, mbhc->mbhc_cfg->gpio_irq);
+				__func__, mbhc->mbhc_cfg->gpio);
 				ret = -EINVAL;
 		}
 
@@ -4165,6 +4202,40 @@ static int wcd9xxx_setup_jack_detect_irq(struct wcd9xxx_mbhc *mbhc)
 					__func__, mbhc->mbhc_cfg->gpio_irq);
 		}
 
+		if (mbhc->mbhc_cfg->gpio_mic) {
+			ret = gpio_request(mbhc->mbhc_cfg->gpio_mic,
+					"mic detect");
+			if (ret) {
+				pr_err("%s:failed to request mic det goio %d\n",
+					__func__, mbhc->mbhc_cfg->gpio_mic);
+					ret = -EINVAL;
+			}
+
+			mbhc->mbhc_cfg->gpio_mic_irq =
+					gpio_to_irq(mbhc->mbhc_cfg->gpio_mic);
+			pr_debug("%s: Mic detect gpio_mic_irq %d\n",
+				__func__, mbhc->mbhc_cfg->gpio_mic_irq);
+
+			ret = request_threaded_irq(mbhc->mbhc_cfg->gpio_mic_irq,
+						   NULL,
+						   wcd9xxx_mech_mic_detect_irq,
+						   (IRQF_TRIGGER_RISING  |
+						    IRQF_TRIGGER_FALLING |
+						    IRQF_ONESHOT),
+						   "mic detect", mbhc);
+			if (ret) {
+				pr_err("%s: Failed to request mic gpio irq %d\n",
+					__func__, mbhc->mbhc_cfg->gpio_mic_irq);
+			} else {
+				ret =
+					enable_irq_wake(
+						mbhc->mbhc_cfg->gpio_mic_irq);
+				if (ret)
+					pr_err("%s: Failed to enable wake up irq %d\n",
+						__func__,
+						mbhc->mbhc_cfg->gpio_mic_irq);
+			}
+		}
 	} else if (mbhc->mbhc_cfg->insert_detect) {
 		/* Enable HPHL_10K_SW */
 		snd_soc_update_bits(mbhc->codec, WCD9XXX_A_RX_HPH_OCP_CTL,
@@ -4218,6 +4289,8 @@ static int wcd9xxx_init_and_calibrate(struct wcd9xxx_mbhc *mbhc)
 		if (!ret && mbhc->mbhc_cfg->gpio) {
 			/* Bootup time detection */
 			wcd9xxx_swch_irq_handler(mbhc);
+			if (mbhc->mbhc_cfg->gpio_mic)
+				wcd9xxx_mic_irq_handler(mbhc);
 		} else if (!ret && mbhc->mbhc_cfg->insert_detect) {
 			pr_debug("%s: Setting up codec own insert detection\n",
 				 __func__);
