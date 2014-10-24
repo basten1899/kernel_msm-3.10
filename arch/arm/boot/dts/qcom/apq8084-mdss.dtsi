@@ -158,8 +158,8 @@
 		reg-names = "dsi_ctrl", "dsi_phy", "mmss_misc_phys";
 		gdsc-supply = <&gdsc_mdss>;
 		vdda-supply = <&pma8084_l2>;
-		vdd-supply = <&pma8084_l22>;
-		vddio-supply = <&pma8084_l12>;
+		vdd-supply = <&pma8084_l18>;
+		vddio-supply = <&pma8084_lvs1>;
 		qcom,mdss-fb-map = <&mdss_fb0>;
 		qcom,mdss-mdp = <&mdss_mdp>;
 
@@ -217,8 +217,8 @@
 			qcom,panel-supply-entry@0 {
 				reg = <0>;
 				qcom,supply-name = "vdd";
-				qcom,supply-min-voltage = <3000000>;
-				qcom,supply-max-voltage = <3000000>;
+				qcom,supply-min-voltage = <2850000>;
+				qcom,supply-max-voltage = <2850000>;
 				qcom,supply-enable-load = <150000>;
 				qcom,supply-disable-load = <100>;
 				qcom,supply-post-on-sleep = <20>;
@@ -246,8 +246,8 @@
 		reg-names = "dsi_ctrl", "dsi_phy", "mmss_misc_phys";
 		gdsc-supply = <&gdsc_mdss>;
 		vdda-supply = <&pma8084_l2>;
-		vdd-supply = <&pma8084_l22>;
-		vddio-supply = <&pma8084_l12>;
+		vdd-supply = <&pma8084_l18>;
+		vddio-supply = <&pma8084_lvs1>;
 		qcom,mdss-fb-map = <&mdss_fb0>;
 		qcom,mdss-mdp = <&mdss_mdp>;
 

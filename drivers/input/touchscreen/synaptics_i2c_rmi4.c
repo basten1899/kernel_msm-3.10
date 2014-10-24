@@ -32,6 +32,7 @@
 #include "synaptics_i2c_rmi4.h"
 #include <linux/input/mt.h>
 
+#define TRULY_PANEL_FIX
 #define DRIVER_NAME "synaptics_rmi4_i2c"
 #define INPUT_PHYS_NAME "synaptics_rmi4_i2c/input0"
 #define DEBUGFS_DIR_NAME "ts_debug"
@@ -2010,6 +2011,66 @@ static int synaptics_rmi4_alloc_fh(struct synaptics_rmi4_fn **fhandler,
 }
 
 
+#ifdef TRULY_PANEL_FIX
+ /**
+ * synaptics_rmi4_set_device_max_xy()
+ *
+ * Called by probe. Updates maximum x and y inside the sensor.
+ *
+ */
+static int synaptics_rmi4_set_device_max_xy(struct synaptics_rmi4_data *rmi4_data)
+{
+    unsigned char control[F11_STD_CTRL_LEN];
+    struct synaptics_rmi4_device_info *rmi;
+    struct synaptics_rmi4_fn *fhandler;
+    struct synaptics_rmi4_fn *next_fhandler;
+    int retval;
+
+    rmi = &(rmi4_data->rmi4_mod_info);
+
+	if (!list_empty(&rmi->support_fn_list)) {
+		list_for_each_entry_safe(fhandler, next_fhandler, &rmi->support_fn_list, link) {
+			if (fhandler->fn_number == SYNAPTICS_RMI4_F11) {
+
+                retval = synaptics_rmi4_i2c_read(rmi4_data,
+                        fhandler->full_addr.ctrl_base,
+                        control,
+                        sizeof(control));
+                if (retval < 0)
+                    return retval;
+
+                rmi4_data->sensor_max_x = ((control[6] & MASK_8BIT) << 0) | ((control[7] & MASK_4BIT) << 8);
+                rmi4_data->sensor_max_y = ((control[8] & MASK_8BIT) << 0) | ((control[9] & MASK_4BIT) << 8);
+                
+
+                if((rmi4_data->disp_maxx != rmi4_data->sensor_max_x) || (rmi4_data->disp_maxy != rmi4_data->sensor_max_y))
+                {
+                    dev_err(&rmi4_data->i2c_client->dev, "Touch sensor size (%dx%d) doesn't match display (%dx%d).\n", 
+                        rmi4_data->sensor_max_x, 
+                        rmi4_data->sensor_max_y,
+                        rmi4_data->disp_maxx, 
+                        rmi4_data->disp_maxy);
+
+                    control[6] = rmi4_data->disp_maxx & MASK_8BIT;
+                    control[7] = (rmi4_data->disp_maxx >> 8) & MASK_4BIT;
+                    control[8] = rmi4_data->disp_maxy & MASK_8BIT;
+                    control[9] = (rmi4_data->disp_maxy >> 8) & MASK_4BIT;
+                    
+                    retval = synaptics_rmi4_i2c_write(rmi4_data,
+                            fhandler->full_addr.ctrl_base,
+                            control,
+                            sizeof(control));
+                    if (retval < 0)
+                        return retval;
+                }
+                return 0;
+			}
+		}
+	}
+    return -1;
+}
+#endif
+
  /**
  * synaptics_rmi4_query_device_info()
  *
@@ -2951,6 +3012,15 @@ static int synaptics_rmi4_probe(struct i2c_client *client,
 	else
 		rmi4_data->disp_miny = 0;
 
+#ifdef TRULY_PANEL_FIX
+    retval = synaptics_rmi4_set_device_max_xy(rmi4_data);
+    if (retval < 0) {
+        dev_err(&client->dev,
+                "%s: Failed to update maximum XY in device\n", __func__);
+        goto err_free_gpios;
+    }
+#endif
+
 	input_set_abs_params(rmi4_data->input_dev,
 			ABS_MT_POSITION_X, rmi4_data->disp_minx,
 			rmi4_data->disp_maxx, 0, 0);
@@ -3639,6 +3709,15 @@ static int synaptics_rmi4_resume(struct device *dev)
 			goto err_gpio_configure;
 		}
 	}
+
+
+#ifdef TRULY_PANEL_FIX
+    retval = synaptics_rmi4_set_device_max_xy(rmi4_data);
+    if (retval < 0) {
+        dev_err(dev, "%s: Failed to update maximum XY in device\n", __func__);
+        goto err_gpio_configure;
+    }
+#endif
 
 	synaptics_rmi4_sensor_wake(rmi4_data);
 	rmi4_data->touch_stopped = false;

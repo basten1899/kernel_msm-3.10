@@ -49,6 +49,8 @@ static void mdss_dsi_panel_bklt_pwm(struct mdss_dsi_ctrl_pdata *ctrl, int level)
 		return;
 	}
 
+    level = ctrl->bklt_max - level;
+
 	if (level == 0) {
 		if (ctrl->pwm_enabled)
 			pwm_disable(ctrl->pwm_bl);

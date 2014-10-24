@@ -210,6 +210,13 @@ static struct gpiomux_setting gpio_uart_gps_cdp_config = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
+
+static struct gpiomux_setting gpio_ts_i2c_config = {
+	.func = GPIOMUX_FUNC_3,
+	.drv  = GPIOMUX_DRV_8MA,
+    .pull = GPIOMUX_PULL_NONE,
+};
+
 static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 	{
 		.gpio      = 0,		/* BLSP1 QUP1 SPI_DATA_MOSI */
@@ -385,14 +392,16 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 	{
 		.gpio      = 61,		/* BLSP2 QUP3 I2C_SDA */
 		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
+            [GPIOMUX_ACTIVE]  = &gpio_ts_i2c_config,
+            [GPIOMUX_SUSPENDED] = &gpio_ts_i2c_config,
 		},
 	},
 
 	{
 		.gpio      = 62,		/* BLSP2 QUP3 I2C_SCL */
 		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
+            [GPIOMUX_ACTIVE]  = &gpio_ts_i2c_config,
+            [GPIOMUX_SUSPENDED] = &gpio_ts_i2c_config,
 		},
 	}
 };
