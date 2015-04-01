@@ -407,6 +407,54 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 	}
 };
 
+static struct gpiomux_setting gpio_spi_blsp2_spi_act_config = {
+	.func = GPIOMUX_FUNC_1,
+	.drv = GPIOMUX_DRV_6MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+static struct gpiomux_setting gpio_spi_blsp2_spi_susp_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_6MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+static struct msm_gpiomux_config apq8084_OpenQ_blsp2_spi_config[] \
+	__initdata = {
+	{
+		/* BLSP2 QUP SPI_CLK */
+		.gpio      = 7,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp2_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp2_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP2 QUP SPI_CS_N */
+		.gpio      = 6,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp2_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp2_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP2 QUP SPI MISO*/
+		.gpio      = 5,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp2_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp2_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP2 QUP SPI MOSI */
+		.gpio      = 4,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp2_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp2_spi_susp_config,
+		},
+	},
+};
+
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 static struct gpiomux_setting gpio_eth_config = {
 	.pull = GPIOMUX_PULL_UP,
@@ -1286,6 +1334,10 @@ void __init apq8084_init_gpiomux(void)
 	if (of_board_is_sbc()) {
 		msm_gpiomux_install(msm_sbc_blsp_configs,
 				ARRAY_SIZE(msm_sbc_blsp_configs));
+
+		msm_gpiomux_install(apq8084_OpenQ_blsp2_spi_config,
+			ARRAY_SIZE(apq8084_OpenQ_blsp2_spi_config));
+
 	} else {
 		msm_gpiomux_install(msm_blsp_configs,
 				ARRAY_SIZE(msm_blsp_configs));

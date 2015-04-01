@@ -74,6 +74,15 @@
 		};
 	};
 
+
+	spi@f9924000 {
+		spidev {
+			compatible = "spi,spidev";
+			reg = <0>;
+			spi-max-frequency = <19200000>;
+		};
+	};
+
 	gnss_qca1530: qca,qca1530@0 {
 		compatible = "qca,qca1530";
 		qca,reset-gpio = <&msmgpio 128 0>;
@@ -564,5 +573,9 @@
 };
 
 &pma8084_l22 {
+	regulator-always-on;
+};
+
+&pma8084_lvs1 {
 	regulator-always-on;
 };

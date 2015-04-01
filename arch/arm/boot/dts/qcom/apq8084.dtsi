@@ -25,6 +25,7 @@
 		sdhc1 = &sdhc_1; /* SDC1 eMMC slot */
 		sdhc2 = &sdhc_2; /* SDC2 SD card slot */
 		spi0 = &spi_0;
+		spi1 = &spi_1;
 	};
 
 	soc: soc { };
@@ -4245,7 +4246,7 @@
 		};
 	};
 
-	spi_0: spi_epm: spi@f9923000 { /* BLSP1 QUP1 */
+	spi_0: spi_epm: spi@f9923000 { /* BLSP1 QUP0 */
 		compatible = "qcom,spi-qup-v2";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -4267,6 +4268,21 @@
 		qcom,ver-reg-exists;
 		qcom,bam-consumer-pipe-index = <12>;
 		qcom,bam-producer-pipe-index = <13>;
+		qcom,master-id = <86>;
+	};
+
+	spi_1: spi@f9924000 { /* BLSP1 QUP1 */
+		compatible = "qcom,spi-qup-v2";
+		reg = <0xf9924000 0x1000>;
+		interrupts = <0 96 0>;
+		spi-max-frequency = <19200000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		qcom,gpio-mosi = <&msmgpio 4 0>; /* MOSI */
+		qcom,gpio-miso = <&msmgpio 5 0>; /* MISO */
+		qcom,gpio-clk = <&msmgpio 7 0>;  /* CLK  */
+		qcom,gpio-cs0 = <&msmgpio 6 0>; /* CS0  */
+		qcom,ver-reg-exists;
 		qcom,master-id = <86>;
 	};
 

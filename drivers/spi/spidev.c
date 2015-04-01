@@ -200,14 +200,14 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 
 	mutex_lock(&spidev->buf_lock);
 	status = spidev_sync_read(spidev, count);
-	if (status > 0) {
+	if (status >= 0) {
 		unsigned long	missing;
 
-		missing = copy_to_user(buf, spidev->buffer, status);
-		if (missing == status)
+		missing = copy_to_user(buf, spidev->buffer, count);
+		if (missing == count)
 			status = -EFAULT;
 		else
-			status = status - missing;
+			status = count - missing;
 	}
 	mutex_unlock(&spidev->buf_lock);
 
