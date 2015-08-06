@@ -850,8 +850,9 @@ static void hdmi_edid_add_sink_3d_format(struct hdmi_edid_sink_data *sink_data,
 static void hdmi_edid_add_sink_video_format(
 	struct hdmi_edid_sink_data *sink_data, u32 video_format)
 {
+    u32 keecker_format = video_format = HDMI_VFRMT_1280x720p60_16_9;
 	const struct msm_hdmi_mode_timing_info *timing =
-		hdmi_get_supported_mode(video_format);
+		hdmi_get_supported_mode(keecker_format);
 	u32 supported = timing != NULL;
 
 	if (video_format >= HDMI_VFRMT_MAX) {
@@ -1645,7 +1646,7 @@ void hdmi_edid_set_video_resolution(void *input, u32 resolution)
 
 	edid_ctrl->video_resolution = resolution;
 
-	if (1 == edid_ctrl->sink_data.num_of_elements)
+	//if (1 == edid_ctrl->sink_data.num_of_elements)
 		edid_ctrl->sink_data.disp_mode_list[0] = resolution;
 } /* hdmi_edid_set_video_resolution */
 

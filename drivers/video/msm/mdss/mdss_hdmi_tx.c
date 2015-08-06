@@ -37,8 +37,9 @@
 #define DRV_NAME "hdmi-tx"
 #define COMPATIBLE_NAME "qcom,hdmi-tx"
 
-#define DEFAULT_VIDEO_RESOLUTION HDMI_VFRMT_640x480p60_4_3
-#define DEFAULT_HDMI_PRIMARY_RESOLUTION HDMI_VFRMT_1920x1080p60_16_9
+#define DEFAULT_VIDEO_RESOLUTION HDMI_VFRMT_1280x720p60_16_9//HDMI_VFRMT_640x480p60_4_3
+#define DEFAULT_HDMI_PRIMARY_RESOLUTION HDMI_VFRMT_1280x720p60_16_9//HDMI_VFRMT_1920x1080p60_16_9
+
 
 /* HDMI PHY/PLL bit field macros */
 #define SW_RESET BIT(2)
@@ -3363,6 +3364,7 @@ static int hdmi_tx_register_panel(struct hdmi_tx_ctrl *hdmi_ctrl)
 	if (!hdmi_ctrl->pdata.primary)
 		hdmi_ctrl->video_resolution = DEFAULT_VIDEO_RESOLUTION;
 
+	printk("\n\r ROBIN: hdmi_ctrl->video_resolution %d",hdmi_ctrl->video_resolution);
 	rc = hdmi_tx_init_panel_info(hdmi_ctrl);
 	if (rc) {
 		DEV_ERR("%s: hdmi_init_panel_info failed\n", __func__);
@@ -4032,9 +4034,11 @@ static int hdmi_tx_probe(struct platform_device *pdev)
 		if (kstrtoint(pan_cfg->arg_cfg, 10, &vic))
 			vic = DEFAULT_HDMI_PRIMARY_RESOLUTION;
 
+		hdmi_ctrl->video_resolution = vic = DEFAULT_HDMI_PRIMARY_RESOLUTION; //added  for keecker.
 		hdmi_ctrl->pdata.primary = true;
 		hdmi_ctrl->pdata.cont_splash_enabled = true;
 
+		printk("\n ROBIN: HDMI :VIC is %d ",vic);
 		if (vic)
 			hdmi_ctrl->video_resolution = vic;
 		else

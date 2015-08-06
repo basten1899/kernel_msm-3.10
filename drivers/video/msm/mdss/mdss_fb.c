@@ -2746,10 +2746,10 @@ static int mdss_fb_handle_buf_sync_ioctl(struct msm_sync_pt_data *sync_pt_data,
 	}
 
 	i = mdss_fb_wait_for_fence(sync_pt_data);
-	if (i > 0)
-		pr_warn("%s: waited on %d active fences\n",
-				sync_pt_data->fence_name, i);
-
+	if (i > 0) {
+		//pr_warn("%s: waited on %d active fences\n",
+				//sync_pt_data->fence_name, i);
+}
 	mutex_lock(&sync_pt_data->sync_mutex);
 	for (i = 0; i < buf_sync->acq_fen_fd_cnt; i++) {
 		fence = sync_fence_fdget(acq_fen_fd[i]);
