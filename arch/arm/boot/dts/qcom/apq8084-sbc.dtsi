@@ -13,6 +13,7 @@
 / {
 	aliases {
 		serial0 = &blsp2_uart1;
+		serial1 = &blsp1_uart1;
 	};
 
 	bt_qca6174 {
@@ -74,6 +75,13 @@
 		};
 	};
 
+	spi@f9968000 {
+		spidev {
+			compatible = "spi,spidev";
+			reg = <0>;
+			spi-max-frequency = <19200000>;
+		};
+	};
 
 	spi@f9924000 {
 		spidev {
@@ -137,7 +145,10 @@
 };
 
 &blsp1_uart1 {
-	status = "disabled";
+	status = "ok";
+	qcom,config-gpio = <2>;
+	qcom,tx-gpio = <&msmgpio 4 0x00>;
+	qcom,rx-gpio = <&msmgpio 5 0x00>;
 };
 
 &blsp2_uart0 {

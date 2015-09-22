@@ -58,33 +58,11 @@ static struct gpiomux_setting ap2mdm_wakeup = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
-static struct gpiomux_setting hap_lvl_shft_active_config = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_8MA,
-	.pull = GPIOMUX_PULL_UP,
-};
-
-static struct gpiomux_setting hap_lvl_shft_suspended_config = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-
 static struct gpiomux_setting gpio_epm_config = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv  = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
 	.dir = GPIOMUX_OUT_HIGH,
-};
-
-static struct msm_gpiomux_config hap_lvl_shft_config[] __initdata = {
-	{
-		.gpio = 48,
-		.settings = {
-			[GPIOMUX_ACTIVE] = &hap_lvl_shft_active_config,
-			[GPIOMUX_SUSPENDED] = &hap_lvl_shft_suspended_config,
-		},
-	},
 };
 
 
@@ -321,15 +299,18 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 	{
 		.gpio      = 4,		/* BLSP1 QUP1 SPI_DATA_MOSI */
 		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_spi_config,
+			//[GPIOMUX_SUSPENDED] = &gpio_spi_config,
+			[GPIOMUX_SUSPENDED] = &gpio_uart_config,
 		},
 	},
 	{
 		.gpio      = 5,		/* BLSP1 QUP1 SPI_DATA_MISO */
 		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_spi_config,
+			//[GPIOMUX_SUSPENDED] = &gpio_spi_config,
+			[GPIOMUX_SUSPENDED] = &gpio_uart_config,
 		},
 	},
+#if 0
 	{
 		.gpio      = 6,		/* BLSP1 QUP1 SPI_CS_N */
 		.settings = {
@@ -342,6 +323,7 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_spi_config,
 		},
 	},
+#endif
 	{
 		.gpio      = 10,		/* BLSP1 QUP2 I2C_SDA */
 		.settings = {
@@ -350,18 +332,6 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 	},
 	{
 		.gpio      = 11,		/* BLSP1 QUP2 I2C_SCL */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
-		},
-	},
-	{
-		.gpio      = 49,		/* BLSP2 QUP5 I2C_SDA */
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
-		},
-	},
-	{
-		.gpio      = 50,		/* BLSP2 QUP5 I2C_SCL */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gpio_i2c_config,
 		},
@@ -407,6 +377,7 @@ static struct msm_gpiomux_config msm_sbc_blsp_configs[] __initdata = {
 	}
 };
 
+#if 0
 static struct gpiomux_setting gpio_spi_blsp2_spi_act_config = {
 	.func = GPIOMUX_FUNC_1,
 	.drv = GPIOMUX_DRV_6MA,
@@ -454,6 +425,57 @@ static struct msm_gpiomux_config apq8084_OpenQ_blsp2_spi_config[] \
 		},
 	},
 };
+#endif
+
+static struct gpiomux_setting gpio_spi_blsp12_spi_act_config = {
+	.func = GPIOMUX_FUNC_1,
+	.drv = GPIOMUX_DRV_6MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+static struct gpiomux_setting gpio_spi_blsp12_spi_susp_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_6MA,
+	.pull = GPIOMUX_PULL_NONE,
+};
+
+static struct msm_gpiomux_config apq8084_OpenQ_blsp12_spi_config[] \
+	__initdata = {
+	{
+		/* BLSP12 QUP SPI_CLK */
+		.gpio      = 50,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp12_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp12_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP12 QUP SPI_CS_N */
+		.gpio      = 49,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp12_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp12_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP12 QUP SPI MISO*/
+		.gpio      = 48,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp12_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp12_spi_susp_config,
+		},
+	},
+	{
+		/* BLSP12 QUP SPI MOSI */
+		.gpio      = 47,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &gpio_spi_blsp12_spi_act_config,
+			[GPIOMUX_SUSPENDED] = &gpio_spi_blsp12_spi_susp_config,
+		},
+	},
+};
+
+
 
 #if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
 static struct gpiomux_setting gpio_eth_config = {
@@ -1335,8 +1357,18 @@ void __init apq8084_init_gpiomux(void)
 		msm_gpiomux_install(msm_sbc_blsp_configs,
 				ARRAY_SIZE(msm_sbc_blsp_configs));
 
-		msm_gpiomux_install(apq8084_OpenQ_blsp2_spi_config,
-			ARRAY_SIZE(apq8084_OpenQ_blsp2_spi_config));
+		//msm_gpiomux_install(apq8084_OpenQ_blsp2_spi_config,
+		//	ARRAY_SIZE(apq8084_OpenQ_blsp2_spi_config));
+		msm_gpiomux_install(apq8084_OpenQ_blsp12_spi_config,
+			ARRAY_SIZE(apq8084_OpenQ_blsp12_spi_config));
+		//msm_gpiomux_install(apq8084_keecker_irq1_input_gpio_config,
+		//	ARRAY_SIZE(apq8084_keecker_irq1_input_gpio_config));
+		//msm_gpiomux_install(apq8084_keecker_irq2_answer_gpio_config,
+		//	ARRAY_SIZE(apq8084_keecker_irq2_answer_gpio_config));
+		//msm_gpiomux_install(apq8084_keecker_gpio_date_output_config,
+		//	ARRAY_SIZE(apq8084_keecker_gpio_date_output_config));
+		//msm_gpiomux_install(apq8084_keecker_gpio_spare_input1_config,
+		//	ARRAY_SIZE(apq8084_keecker_gpio_spare_input1_config));
 
 	} else {
 		msm_gpiomux_install(msm_blsp_configs,
@@ -1377,8 +1409,6 @@ void __init apq8084_init_gpiomux(void)
 			ARRAY_SIZE(apq8084_hsic_configs));
 		msm_gpiomux_install_nowrite(msm_hdmi_configs,
 			ARRAY_SIZE(msm_hdmi_configs));
-		msm_gpiomux_install(hap_lvl_shft_config,
-			ARRAY_SIZE(hap_lvl_shft_config));
 	}
 
 	msm_gpiomux_install(msm_wlan_configs, ARRAY_SIZE(msm_wlan_configs));
